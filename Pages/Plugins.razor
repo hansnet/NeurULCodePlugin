@@ -1,0 +1,30 @@
+﻿@page "/cortex/diary/{name}"
+@using System.Reflection
+
+@if(componentName is not null)
+{
+    <DynamicComponent Type="componentName"></DynamicComponent>
+}
+
+@code {
+    [Parameter]
+    public string Name { get; set; }
+    public Type componentName;
+
+    protected override void OnParametersSet()
+    {
+        //scan assembly from a folder
+        var path = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "wwwroot\\plugin");
+        string[] allfiles = Directory.GetFiles(path, "*.dll", SearchOption.AllDirectories);
+        
+        foreach (var file in allfiles)
+        {
+            var assembly = Assembly.LoadFrom(file);
+            var fullname = assembly.GetTypes().FirstOrDefault(x=>x.Name == Name)?.FullName;
+            if (fullname != null)
+                componentName = assembly.GetType(fullname);
+        }
+        
+        base.OnParametersSet();
+    }
+}
